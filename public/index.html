@@ -138,7 +138,7 @@
           <button class="clear-filters" id="clear-filters" type="button" hidden>Clear filters <span aria-hidden="true">×</span></button>
         </div>
 
-        <div class="results-heading">
+        <div class="results-heading" id="results-heading">
           <div>
             <h3>Open opportunities <span class="results-count" id="results-count"></span></h3>
             <p id="results-caption">A little momentum goes a long way.</p>
@@ -154,6 +154,10 @@
 
         <div class="job-grid" id="job-grid" aria-live="polite">
           <div class="loading-state"><span class="loader" aria-hidden="true"></span> Gathering today's opportunities…</div>
+        </div>
+        <div class="pagination-bar">
+          <p class="pagination-info" id="pagination-info" aria-live="polite"></p>
+          <nav class="pagination" id="pagination" aria-label="Job result pages" hidden></nav>
         </div>
         <div class="empty-state" id="empty-state" hidden>
           <div class="empty-icon" aria-hidden="true">✳</div>

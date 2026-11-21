@@ -40,16 +40,16 @@ DEDUP_BATCH_OVERLAP = 2
 LEVELS = ("Fresher", "Entry-level", "Experienced", "Internship", "Unspecified")
 EMPLOYMENT_TYPES = ("Full-time", "Internship", "Contract", "Part-time", "Other")
 SOURCE_GEO_CITIES = re.compile(
-    r"\b(india|indian|bengaluru|bangalore|mumbai|delhi|gurugram|gurgaon|"
+    r"\b(india|indian|bengaluru|bangalore|banglore|mumbai|delhi|gurugram|gurgaon|"
     r"hyderabad|pune|chennai|kolkata|noida|ahmedabad|kochi|jaipur|indore|"
     r"remote worldwide|worldwide|anywhere|work from anywhere|global)\b",
     re.IGNORECASE,
 )
 SOURCE_REMOTE_INDIA = re.compile(
     r"\b(?:remote|distributed|work from anywhere)\b.{0,100}\b"
-    r"(?:in|from|across|within)?\s*(?:india|indian|bengaluru|bangalore|mumbai|delhi|"
+    r"(?:in|from|across|within)?\s*(?:india|indian|bengaluru|bangalore|banglore|mumbai|delhi|"
     r"gurugram|gurgaon|hyderabad|pune|chennai|kolkata|noida|ahmedabad|kochi|jaipur|indore)\b"
-    r"|\b(?:india|indian|bengaluru|bangalore|mumbai|delhi|gurugram|gurgaon|hyderabad|pune|"
+    r"|\b(?:india|indian|bengaluru|bangalore|banglore|mumbai|delhi|gurugram|gurgaon|hyderabad|pune|"
     r"chennai|kolkata|noida|ahmedabad|kochi|jaipur|indore)\b.{0,100}\b"
     r"(?:remote|distributed|work from anywhere|eligible|open to|based)\b",
     re.IGNORECASE,
@@ -77,6 +77,7 @@ class Job(TypedDict, total=False):
     location: str
     description: str
     employmentType: str
+    sourceEmploymentType: str
     postedAt: str | None
     salary: str
     url: str
@@ -194,6 +195,113 @@ def normalize_employment_type(value: str) -> str:
     return aliases[normalized]
 
 
+def normalize_city(city: object, location: object) -> str:
+    aliases = (
+        ("Bengaluru", ("bengaluru", "bangalore", "banglore")),
+        ("Mumbai", ("mumbai",)),
+        ("Delhi", ("delhi",)),
+        ("Gurugram", ("gurugram", "gurgaon")),
+        ("Hyderabad", ("hyderabad",)),
+        ("Pune", ("pune",)),
+        ("Chennai", ("chennai",)),
+        ("Kolkata", ("kolkata",)),
+        ("Noida", ("noida",)),
+        ("Ahmedabad", ("ahmedabad",)),
+        ("Kochi", ("kochi",)),
+        ("Jaipur", ("jaipur",)),
+        ("Indore", ("indore",)),
+    )
+    city_text = clean_text(city)
+    location_text = clean_text(location)
+    candidates = [
+        value
+        for value in (city_text, location_text)
+        if normalize_text(value) not in {"", "not specified", "unknown", "location not listed"}
+    ]
+    normalized_candidates = [normalize_text(candidate) for candidate in candidates]
+    for normalized in normalized_candidates:
+        for canonical, names in aliases:
+            if any(re.search(rf"\b{re.escape(name)}\b", normalized) for name in names):
+                return canonical
+    for normalized in normalized_candidates:
+        if normalized in {
+            "remote",
+            "distributed",
+            "anywhere",
+            "worldwide",
+            "remote worldwide",
+            "remote india",
+            "remote in india",
+            "global",
+        }:
+            return "Remote"
+    return candidates[0] if candidates else "Not specified"
+
+
+def infer_role_from_title(title: object) -> str | None:
+    normalized = normalize_text(title)
+    title_roles = (
+        ("Content & Copywriting", r"\b(copywriter|copy writer|content writer|technical writer|editor)\b"),
+        ("Research", r"\b(research|researcher)\b"),
+        ("Data", r"\b(data|analytics|analyst|machine learning)\b"),
+        ("Design", r"\b(design|designer|ux|ui)\b"),
+        ("Engineering", r"\b(engineer|engineering|developer|devops|sre|software)\b"),
+        ("Product", r"\b(product manager|product owner|product)\b"),
+        ("Marketing", r"\b(marketing|communications|seo|public relations)\b"),
+        ("Sales", r"\b(sales|account executive|account manager)\b"),
+        ("Business Development", r"\b(business development|partnerships)\b"),
+        ("Finance", r"\b(finance|accountant|accounting|audit|treasury)\b"),
+        ("Human Resources", r"\b(hr|hrbp|human resources|recruiter|recruiting|talent)\b"),
+        ("Operations", r"\b(operations|supply chain|logistics)\b"),
+        ("Customer Success", r"\bcustomer success\b"),
+        ("Customer Support", r"\b(support|service desk)\b"),
+        ("Legal", r"\b(legal|counsel|attorney)\b"),
+    )
+    for role, pattern in title_roles:
+        if re.search(pattern, normalized):
+            return role
+    return None
+
+
+def normalize_role(role: object, title: object) -> str:
+    inferred_role = infer_role_from_title(title)
+    if inferred_role:
+        return inferred_role
+    clean_role = clean_text(role)
+    aliases = {
+        "hr": "Human Resources",
+        "human resources": "Human Resources",
+        "content": "Content & Copywriting",
+        "copywriting": "Content & Copywriting",
+        "customer service": "Customer Support",
+        "it": "IT",
+    }
+    return aliases.get(normalize_text(clean_role), clean_role or "Other")
+
+
+def is_internship_title(title: object) -> bool:
+    return bool(re.search(r"\b(intern|internship)\b", clean_text(title), re.IGNORECASE))
+
+
+def source_employment_type(job: Job) -> str | None:
+    value = job.get("sourceEmploymentType") or job.get("employmentType", "")
+    try:
+        return normalize_employment_type(value)
+    except ValueError:
+        return None
+
+
+def resolve_employment_type(job: Job, proposed_type: str) -> str:
+    source_type = source_employment_type(job)
+    if source_type:
+        return source_type
+    if is_internship_title(job.get("title")):
+        return "Internship"
+    if normalize_employment_type(proposed_type) == "Internship":
+        return "Other"
+    return normalize_employment_type(proposed_type)
+
+
 def normalize_level(value: str) -> str:
     normalized = normalize_text(value)
     aliases = {
@@ -255,6 +363,7 @@ def normalize_job(raw: dict, source: dict[str, str]) -> Job | None:
         "location": location,
         "description": clean_text(raw.get("description"))[:4_000],
         "employmentType": clean_text(raw.get("employment_type")),
+        "sourceEmploymentType": clean_text(raw.get("employment_type")),
         "postedAt": normalize_date(raw.get("posted_at")),
         "salary": " – ".join(salary_parts),
         "url": url,
@@ -284,7 +393,7 @@ def is_explicitly_india_located(job: Job) -> bool:
     location = clean_text(job.get("location"))
     normalized_location = normalize_text(location)
     if re.search(
-        r"\b(india|indian|bengaluru|bangalore|mumbai|delhi|gurugram|gurgaon|"
+        r"\b(india|indian|bengaluru|bangalore|banglore|mumbai|delhi|gurugram|gurgaon|"
         r"hyderabad|pune|chennai|kolkata|noida|ahmedabad|kochi|jaipur|indore)\b",
         location,
         re.IGNORECASE,
@@ -306,7 +415,6 @@ def fallback_tags(job: Job) -> Job | None:
         return None
 
     title = normalize_text(job.get("title"))
-    description = normalize_text(job.get("description", "")[:1_500])
     location = clean_text(job.get("location"))
 
     role_keywords = (
@@ -321,7 +429,7 @@ def fallback_tags(job: Job) -> Job | None:
         ("Operations", ("operations", "supply chain", "logistics")),
         ("Customer Support", ("support", "customer success", "service desk")),
     )
-    role = next(
+    role = infer_role_from_title(job.get("title")) or next(
         (
             name
             for name, keywords in role_keywords
@@ -329,43 +437,13 @@ def fallback_tags(job: Job) -> Job | None:
         ),
         "Other",
     )
-
-    cities = (
-        ("Bengaluru", ("bengaluru", "bangalore")),
-        ("Mumbai", ("mumbai",)),
-        ("Delhi", ("delhi",)),
-        ("Gurugram", ("gurugram", "gurgaon")),
-        ("Hyderabad", ("hyderabad",)),
-        ("Pune", ("pune",)),
-        ("Chennai", ("chennai",)),
-        ("Kolkata", ("kolkata",)),
-        ("Noida", ("noida",)),
-        ("Ahmedabad", ("ahmedabad",)),
-        ("Kochi", ("kochi",)),
-        ("Jaipur", ("jaipur",)),
-        ("Indore", ("indore",)),
-    )
     normalized_location = normalize_text(location)
-    city = next(
-        (
-            name
-            for name, aliases in cities
-            if any(alias in normalized_location for alias in aliases)
-        ),
-        "Remote"
-        if normalized_location
-        in {"remote", "distributed", "anywhere", "worldwide", "remote worldwide", "global"}
-        else "Not specified",
-    )
-    raw_employment = normalize_text(job.get("employmentType", ""))
-    if "intern" in title or "intern" in raw_employment or "intern" in description:
+    city = normalize_city("", location)
+    if is_internship_title(job.get("title")):
         employment_type = "Internship"
         level = "Internship"
     else:
-        try:
-            employment_type = normalize_employment_type(job.get("employmentType", ""))
-        except ValueError:
-            employment_type = "Other"
+        employment_type = source_employment_type(job) or "Other"
         if any(term in title for term in ("fresher", "new grad", "fresh graduate")):
             level = "Fresher"
         elif any(term in title for term in ("entry level", "junior", "graduate")):
@@ -429,6 +507,8 @@ def merge_job(target: Job, source: Job) -> None:
         target["salary"] = source["salary"]
     if not target.get("employmentType") and source.get("employmentType"):
         target["employmentType"] = source["employmentType"]
+    if not target.get("sourceEmploymentType") and source.get("sourceEmploymentType"):
+        target["sourceEmploymentType"] = source["sourceEmploymentType"]
     if source.get("tagSource") == "ai" or (
         target.get("tagSource") != "ai"
         and source.get("tagSource")
@@ -1044,6 +1124,7 @@ async def classify_jobs(
                                     "company": job["company"],
                                     "location": job["location"],
                                     "employment_type": job.get("employmentType", ""),
+                                    "source_employment_type": job.get("sourceEmploymentType", ""),
                                     "description": job.get("description", "")[:MAX_TAG_DESCRIPTION_CHARS],
                                 }
                                 for job in batch
@@ -1112,7 +1193,7 @@ async def classify_jobs(
                 continue
             try:
                 level = normalize_level(tag.level)
-                employment_type = normalize_employment_type(tag.employment_type)
+                employment_type = resolve_employment_type(job, tag.employment_type)
             except ValueError as error:
                 logger.warning(
                     "AI returned an unsupported category for job %s (%s); trying rule-based tags.",
@@ -1124,11 +1205,15 @@ async def classify_jobs(
                     continue
                 tagged.append(fallback)
                 continue
+            if employment_type == "Internship":
+                level = "Internship"
+            elif level == "Internship":
+                level = "Unspecified"
             tagged.append(
                 {
                     **job,
-                    "role": clean_text(tag.role),
-                    "city": clean_text(tag.city) or "Not specified",
+                    "role": normalize_role(tag.role, job.get("title")),
+                    "city": normalize_city(tag.city, job.get("location")),
                     "location": clean_text(tag.location) or job["location"],
                     "level": level,
                     "employmentType": employment_type,
@@ -1149,6 +1234,7 @@ def format_job(job: Job) -> Job:
         "role": job.get("role", "Other"),
         "level": job.get("level", "Unspecified"),
         "employmentType": job.get("employmentType", "Other"),
+        "sourceEmploymentType": job.get("sourceEmploymentType", ""),
         "postedAt": job.get("postedAt"),
         "salary": job.get("salary", ""),
         "description": job.get("description", "")[:500],

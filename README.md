@@ -65,7 +65,7 @@ The `jobboard` graph runs four steps:
 
 1. **Collect** public API / configured ATS listings and keep source links.
 2. **Deduplicate** exact matches locally, then ask the LLM to identify definite cross-feed duplicates; conservative company/title/location checks prevent unrelated roles from being merged.
-3. **Classify** role family, city, location, experience level, employment type, and India eligibility using structured output. Only explicitly India-eligible listings are published.
+3. **Classify** role family, city, location, experience level, employment type, and India eligibility using structured output. City aliases are canonicalized, and explicit source employment types take precedence over model guesses; clear internship titles are used when source type is unavailable. Only explicitly India-eligible listings are published.
 4. **Publish** a sorted JSON snapshot and real per-category coverage counts.
 
 ## Free-tier AI providers

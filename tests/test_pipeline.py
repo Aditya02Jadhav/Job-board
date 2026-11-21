@@ -20,6 +20,7 @@ from jobboard.pipeline import (
     exact_deduplicate,
     configured_groq_api_keys,
     configured_gemini_api_keys,
+    fallback_tags,
     LLMKeyPool,
     invoke_structured,
     is_gemini_quota_error,
@@ -27,8 +28,10 @@ from jobboard.pipeline import (
     llm_deduplicate,
     merge_ai_duplicate_groups,
     normalize_date,
+    normalize_city,
     normalize_employment_type,
     normalize_level,
+    normalize_role,
     normalize_job,
     parse_company_boards,
     may_be_india_eligible,
@@ -119,6 +122,30 @@ class IncompleteOnceModel:
         return result
 
 
+class MisclassifyingTagModel:
+    async def ainvoke(self, messages: list) -> TagBatch:
+        payload = json.loads(next(item.content for item in messages if isinstance(item, HumanMessage)))
+        return TagBatch(
+            jobs=[
+                TaggedJob(
+                    id=item["id"],
+                    role="Engineering",
+                    city="Banglore",
+                    location="Banglore, India",
+                    level="Internship",
+                    employment_type="Internship",
+                    india_eligible=True,
+                )
+                for item in payload
+            ]
+        )
+
+
+class MisclassifyingTagLLM:
+    def with_structured_output(self, schema: type) -> MisclassifyingTagModel:
+        return MisclassifyingTagModel()
+
+
 class DailyLimitError(Exception):
     status_code = 429
     body = {
@@ -177,6 +204,69 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported employment type"):
             normalize_employment_type("Seasonal")
 
+    def test_normalizes_city_aliases_and_case(self) -> None:
+        self.assertEqual(normalize_city("Bangalore, India", "Bangalore, India"), "Bengaluru")
+        self.assertEqual(normalize_city("Banglore India", "Banglore India"), "Bengaluru")
+        self.assertEqual(normalize_city("hyderabad", "Hyderabad, Telangana"), "Hyderabad")
+        self.assertEqual(normalize_city("Not specified", "Remote · India"), "Remote")
+        self.assertTrue(may_be_india_eligible(make_job(location="Banglore India")))
+
+    def test_uses_clear_title_evidence_for_job_role(self) -> None:
+        self.assertEqual(normalize_role("Engineering", "Senior Copywriter"), "Content & Copywriting")
+        self.assertEqual(normalize_role("HR", "People Partner"), "Human Resources")
+
+    def test_fallback_does_not_infer_internship_from_description(self) -> None:
+        job = make_job(
+            title="Senior Copywriter",
+            location="Bangalore, India",
+        )
+        job["description"] = "Join our internationally distributed team."
+        job["employmentType"] = ""
+        job["sourceEmploymentType"] = ""
+
+        tagged = fallback_tags(job)
+
+        self.assertIsNotNone(tagged)
+        assert tagged is not None
+        self.assertEqual(tagged["role"], "Content & Copywriting")
+        self.assertEqual(tagged["city"], "Bengaluru")
+        self.assertEqual(tagged["employmentType"], "Other")
+        self.assertNotEqual(tagged["employmentType"], "Internship")
+
+    def test_classification_prioritizes_source_and_title_evidence(self) -> None:
+        async def verify() -> None:
+            internship = make_job(
+                title="Marketing internship (brand & communication)",
+                url="https://example.com/jobs/internship",
+            )
+            internship["sourceEmploymentType"] = "FullTime"
+            title_internship = make_job(
+                title="Product User Research, Intern",
+                url="https://example.com/jobs/title-internship",
+            )
+            copywriter = make_job(
+                title="Senior Copywriter",
+                url="https://example.com/jobs/copywriter",
+            )
+            jobs = await classify_jobs(
+                [internship, title_internship, copywriter],
+                MisclassifyingTagLLM(),
+                LLMRequestPacer(0),
+            )
+            by_title = {job["title"]: job for job in jobs}
+
+            self.assertEqual(by_title[internship["title"]]["employmentType"], "Full-time")
+            self.assertEqual(by_title[internship["title"]]["level"], "Unspecified")
+            self.assertEqual(by_title[internship["title"]]["role"], "Marketing")
+            self.assertEqual(by_title[title_internship["title"]]["employmentType"], "Internship")
+            self.assertEqual(by_title[title_internship["title"]]["level"], "Internship")
+            self.assertEqual(by_title[copywriter["title"]]["employmentType"], "Other")
+            self.assertEqual(by_title[copywriter["title"]]["level"], "Unspecified")
+            self.assertEqual(by_title[copywriter["title"]]["role"], "Content & Copywriting")
+            self.assertEqual(by_title[copywriter["title"]]["city"], "Bengaluru")
+
+        asyncio.run(verify())
+
     def test_rejects_non_https_or_incomplete_listings(self) -> None:
         self.assertIsNone(normalize_job({"title": "Engineer", "company": "Co", "url": "http://bad.test"}, SOURCE))
         self.assertIsNone(normalize_job({"title": "Engineer", "url": "https://good.test"}, SOURCE))
@@ -228,6 +318,7 @@ class PipelineTests(unittest.TestCase):
                     [job] = await collect_ats_board(None, board)
                 self.assertEqual(job["title"], "Software Engineer")
                 self.assertEqual(job["location"], "Bengaluru, India")
+                self.assertEqual(job["sourceEmploymentType"], "FullTime")
                 self.assertEqual(job["sources"][0]["url"], "https://jobs.ashbyhq.com/sarvam")
 
         asyncio.run(verify())
