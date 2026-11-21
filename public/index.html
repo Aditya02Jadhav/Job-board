@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7f3">
+    <meta name="description" content="Find your first job, internship, or next full-time role in India. Search real, source-linked openings refreshed every day.">
+    <title>Firstlight — Find your next start</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css?v=2">
+    <script src="/app.js?v=3" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Firstlight home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M16 3.5v5M16 23.5v5M3.5 16h5M23.5 16h5M7.16 7.16l3.54 3.54m10.6 10.6 3.54 3.54m0-17.68-3.54 3.54m-10.6 10.6-3.54 3.54" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="5.1" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand-name">firstlight<span>.</span></span>
+      </a>
+      <nav class="header-links" aria-label="Main navigation">
+        <a class="active" href="#openings">Find a role</a>
+        <a href="#how-it-works">How it works</a>
+      </nav>
+      <div class="header-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Refreshed daily</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-line"></span> A better place to begin</div>
+          <h1 id="hero-title">Your next chapter<br>starts <span>right here.</span></h1>
+          <p>Real opportunities for the curious, the ambitious, and everyone ready to get going.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="orbit orbit-three"></div>
+          <div class="sun-disc"></div>
+          <div class="art-caption"><span>INDIA</span><span>·</span><span>YOUR NEXT MOVE</span></div>
+          <div class="art-sparkle sparkle-one">✳</div>
+          <div class="art-sparkle sparkle-two">✳</div>
+        </div>
+        <div class="hero-bottom">
+          <div class="hero-promise">
+            <span class="promise-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none"><path d="m4 10 4 4 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span>Every opening links back to its original source</span>
+          </div>
+          <a class="scroll-link" href="#openings">Explore opportunities <span aria-hidden="true">↓</span></a>
+        </div>
+      </section>
+
+      <section class="search-section" id="openings" aria-labelledby="openings-title">
+        <div class="section-intro">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> The opportunity board</div>
+            <h2 id="openings-title">Good work, <span>within reach.</span></h2>
+          </div>
+          <p>Thoughtfully gathered from public job feeds<br class="desktop-only"> and official company career pages.</p>
+        </div>
+
+        <form class="search-form" id="search-form" role="search">
+          <label class="search-box" for="search-input">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input id="search-input" type="search" placeholder="Role, company, or keyword" autocomplete="off">
+            <span class="search-shortcut" aria-hidden="true">⌘ K</span>
+          </label>
+          <button class="search-button" type="submit">Find your role <span aria-hidden="true">↗</span></button>
+        </form>
+
+        <div class="board-meta">
+          <span class="updated-label">Updated <span id="updated-at">—</span></span>
+        </div>
+
+        <div class="stats-row" aria-label="Job board overview">
+          <article class="stats-card">
+            <strong id="stat-openings">—</strong>
+            <h3>open opportunities</h3>
+            <p>India-focused roles gathered across a daily refresh.</p>
+          </article>
+          <article class="stats-card">
+            <strong id="stat-sources">—</strong>
+            <h3>credited sources</h3>
+            <p>Public feeds and official company career boards.</p>
+          </article>
+          <article class="stats-card">
+            <strong id="stat-full-time">—</strong>
+            <h3>full-time roles</h3>
+            <p>A searchable result board, not a wall of noise.</p>
+          </article>
+        </div>
+
+        <div class="filters" aria-label="Filter opportunities">
+          <label class="filter-field">
+            <span>Location</span>
+            <select id="location-filter" aria-label="Filter by city">
+              <option value="">All locations</option>
+            </select>
+            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2 4 4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+          <label class="filter-field">
+            <span>Role</span>
+            <select id="role-filter" aria-label="Filter by role">
+              <option value="">All roles</option>
+            </select>
+            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2 4 4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+          <label class="filter-field">
+            <span>Opportunity</span>
+            <select id="type-filter" aria-label="Filter by opportunity type">
+              <option value="">All opportunities</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Internship">Internship</option>
+              <option value="Contract">Contract</option>
+              <option value="Part-time">Part-time</option>
+            </select>
+            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2 4 4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+          <label class="filter-field filter-level">
+            <span>Experience</span>
+            <select id="level-filter" aria-label="Filter by experience level">
+              <option value="">Any level</option>
+              <option value="Fresher">Fresher</option>
+              <option value="Entry-level">Entry-level</option>
+              <option value="Internship">Internship</option>
+              <option value="Experienced">Experienced</option>
+            </select>
+            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2 4 4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+          <button class="clear-filters" id="clear-filters" type="button" hidden>Clear filters <span aria-hidden="true">×</span></button>
+        </div>
+
+        <div class="results-heading">
+          <div>
+            <h3>Open opportunities <span class="results-count" id="results-count"></span></h3>
+            <p id="results-caption">A little momentum goes a long way.</p>
+          </div>
+          <label class="sort-control">Sort by
+            <select id="sort-filter" aria-label="Sort opportunities">
+              <option value="newest">Newest first</option>
+              <option value="company">Company A–Z</option>
+              <option value="role">Role A–Z</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="job-grid" id="job-grid" aria-live="polite">
+          <div class="loading-state"><span class="loader" aria-hidden="true"></span> Gathering today's opportunities…</div>
+        </div>
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">✳</div>
+          <h3 id="empty-title">No matches just yet</h3>
+          <p id="empty-message">Try a different search or clear a filter to see more opportunities.</p>
+          <button id="empty-action" class="text-button" type="button">Clear filters <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+
+      <section class="how-section" id="how-it-works" aria-labelledby="how-title">
+        <div class="how-heading">
+          <div class="eyebrow"><span class="eyebrow-line"></span> Good to know</div>
+          <h2 id="how-title">Less noise.<br><span>More next steps.</span></h2>
+        </div>
+        <div class="how-details">
+          <article class="how-card">
+            <span class="how-number">01</span>
+            <h3>Real roles, from real sources.</h3>
+            <p>Every opening comes from a public feed or an official company career page. No made-up listings, ever.</p>
+          </article>
+          <article class="how-card">
+            <span class="how-number">02</span>
+            <h3>Find your kind of work.</h3>
+            <p>Search by what you want to do, where you want to do it, and the kind of opportunity you’re ready for.</p>
+          </article>
+          <article class="how-card">
+            <span class="how-number">03</span>
+            <h3>Go straight to the source.</h3>
+            <p>When something feels right, follow its source link to read the full details and apply there.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="/" aria-label="Firstlight home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5v5M16 23.5v5M3.5 16h5M23.5 16h5M7.16 7.16l3.54 3.54m10.6 10.6 3.54 3.54m0-17.68-3.54 3.54m-10.6 10.6-3.54 3.54" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="16" cy="16" r="5.1" fill="currentColor"/></svg>
+        </span>
+        <span class="brand-name">firstlight<span>.</span></span>
+      </a>
+      <p>Here’s to what’s next.</p>
+      <span class="footer-note">Made for the beginning.</span>
+    </footer>
+  </body>
+</html>

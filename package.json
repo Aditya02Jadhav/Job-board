@@ -1,0 +1,11 @@
+{
+  "name": "firstlight-india-jobs",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "refresh": ".venv\\Scripts\\python.exe -m jobboard",
+    "test": ".venv\\Scripts\\python.exe -m unittest discover -s tests -v"
+  }
+}
