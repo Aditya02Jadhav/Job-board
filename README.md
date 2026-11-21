@@ -20,6 +20,18 @@ Set `GROQ_API_KEY` or `GEMINI_API_KEY` in `.env`, then start the website with `s
 
 Run the collector and LangGraph agent locally with `npm run refresh`. It reads source and LLM settings from `.env` and writes the job snapshot to `public/data/jobs.json`. New candidates are staged in the private, ignored `.jobboard-cache/pending-jobs.json` and clearly India-eligible candidates are merged into the snapshot before AI tagging; if tagging fails, those listings remain available with visibly marked rule-based tags. Existing jobs are retained and exact duplicates are removed when the final snapshot is published. Unit tests run with `npm test`.
 
+## Deploy to Vercel
+
+The website is a static frontend. `vercel.json` sets the Framework Preset to **Other** and serves `public/` as the output directory, so Vercel does not try to run the Python job collector or `server.mjs`. The published `public/data/jobs.json` is served with the site.
+
+To deploy:
+
+1. Import this GitHub repository into Vercel and set the Root Directory to the repository root.
+2. Leave the Build Command and Install Command empty (the committed `vercel.json` also overrides them) and deploy.
+3. Add the LLM and optional Adzuna credentials as **GitHub Actions secrets**, not Vercel environment variables. The scheduled `Refresh job board` workflow runs the collector and pushes updated `public/data/jobs.json`; Vercel then redeploys the new snapshot from that commit.
+
+The Node server and its in-process daily timer are for local use only. Vercel static deployments do not run that server or the Python collector. If the Vercel build still reports `PYTHON_ENTRYPOINT_NOT_FOUND`, confirm the deployed commit contains `vercel.json`, the Root Directory is correct, and the project's Framework Preset is **Other**.
+
 ## Sources and configuration
 
 - **Jobicy public Jobs API** is queried for APAC and Anywhere with cursor pagination, at least one second between requests, and up to 100 jobs per page. Its public feed covers a rolling seven-day window. Listings retain their Jobicy URL and attribution. An APAC label by itself is not treated as proof a role is open to India.
