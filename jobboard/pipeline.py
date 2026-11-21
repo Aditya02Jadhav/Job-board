@@ -81,6 +81,7 @@ class Job(TypedDict, total=False):
     postedAt: str | None
     salary: str
     url: str
+    logo: str
     sources: list[dict[str, str]]
     role: str
     city: str
@@ -356,7 +357,20 @@ def normalize_job(raw: dict, source: dict[str, str]) -> Job | None:
 
     job_id = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
     salary_parts = [clean_text(raw.get(key)) for key in ("salary_min", "salary_max") if raw.get(key)]
-    return {
+    logo = str(
+        raw.get("logo")
+        or raw.get("logo_url")
+        or raw.get("logoUrl")
+        or raw.get("companyLogo")
+        or raw.get("company_logo")
+        or raw.get("companyLogoUrl")
+        or raw.get("jobLogo")
+        or ""
+    ).strip()
+    if logo.startswith("//"):
+        logo = f"https:{logo}"
+    logo_url = logo if urlparse(logo).scheme == "https" and urlparse(logo).netloc else ""
+    job = {
         "id": job_id,
         "title": title,
         "company": company,
@@ -369,6 +383,9 @@ def normalize_job(raw: dict, source: dict[str, str]) -> Job | None:
         "url": url,
         "sources": [source],
     }
+    if logo_url:
+        job["logo"] = logo_url
+    return job
 
 
 def may_be_india_eligible(job: Job) -> bool:
@@ -509,6 +526,8 @@ def merge_job(target: Job, source: Job) -> None:
         target["employmentType"] = source["employmentType"]
     if not target.get("sourceEmploymentType") and source.get("sourceEmploymentType"):
         target["sourceEmploymentType"] = source["sourceEmploymentType"]
+    if not target.get("logo") and source.get("logo"):
+        target["logo"] = source["logo"]
     if source.get("tagSource") == "ai" or (
         target.get("tagSource") != "ai"
         and source.get("tagSource")
@@ -651,6 +670,7 @@ async def collect_jobicy(client: httpx.AsyncClient) -> list[Job]:
                         "salary_min": item.get("annualSalaryMin"),
                         "salary_max": item.get("annualSalaryMax"),
                         "url": item.get("url"),
+                        "logo": item.get("jobLogo") or item.get("companyLogo") or item.get("logo"),
                     },
                     {"name": "Jobicy", "url": "https://jobicy.com/jobs"},
                 )
@@ -709,6 +729,7 @@ async def collect_adzuna(client: httpx.AsyncClient) -> list[Job]:
                         "salary_min": item.get("salary_min"),
                         "salary_max": item.get("salary_max"),
                         "url": item.get("redirect_url"),
+                        "logo": (item.get("company") or {}).get("logo"),
                     },
                     {"name": "Adzuna", "url": "https://www.adzuna.com"},
                 )
@@ -732,6 +753,7 @@ async def collect_ats_board(client: httpx.AsyncClient, board: dict[str, str]) ->
                 "description": item.get("content"),
                 "posted_at": item.get("updated_at"),
                 "url": item.get("absolute_url"),
+                "logo": item.get("company_logo") or item.get("companyLogoUrl"),
             }
             for item in postings
         ]
@@ -749,6 +771,7 @@ async def collect_ats_board(client: httpx.AsyncClient, board: dict[str, str]) ->
                 "posted_at": item.get("createdAt"),
                 "employment_type": (item.get("categories") or {}).get("commitment"),
                 "url": item.get("hostedUrl"),
+                "logo": item.get("companyLogo") or item.get("logo"),
             }
             for item in postings
         ]
@@ -769,6 +792,7 @@ async def collect_ats_board(client: httpx.AsyncClient, board: dict[str, str]) ->
                 "posted_at": item.get("publishedAt"),
                 "employment_type": item.get("employmentType"),
                 "url": item.get("jobUrl"),
+                "logo": item.get("companyLogoUrl") or item.get("logoUrl") or item.get("companyLogo"),
             }
             for item in postings
         ]
@@ -1239,6 +1263,7 @@ def format_job(job: Job) -> Job:
         "salary": job.get("salary", ""),
         "description": job.get("description", "")[:500],
         "url": job["url"],
+        **({"logo": job["logo"]} if job.get("logo") else {}),
         "sources": job.get("sources", []),
         "tagSource": job.get("tagSource", "ai"),
     }

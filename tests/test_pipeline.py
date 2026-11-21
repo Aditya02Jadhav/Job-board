@@ -271,6 +271,31 @@ class PipelineTests(unittest.TestCase):
         self.assertIsNone(normalize_job({"title": "Engineer", "company": "Co", "url": "http://bad.test"}, SOURCE))
         self.assertIsNone(normalize_job({"title": "Engineer", "url": "https://good.test"}, SOURCE))
 
+    def test_preserves_secure_company_logo_urls_and_ignores_insecure_urls(self) -> None:
+        job = normalize_job(
+            {
+                "title": "Engineer",
+                "company": "Co",
+                "url": "https://example.com/jobs/1",
+                "jobLogo": "//cdn.example.com/company.png",
+            },
+            SOURCE,
+        )
+        self.assertIsNotNone(job)
+        self.assertEqual(job["logo"], "https://cdn.example.com/company.png")
+
+        insecure = normalize_job(
+            {
+                "title": "Engineer",
+                "company": "Co",
+                "url": "https://example.com/jobs/2",
+                "companyLogoUrl": "http://cdn.example.com/company.png",
+            },
+            SOURCE,
+        )
+        self.assertIsNotNone(insecure)
+        self.assertNotIn("logo", insecure)
+
     def test_company_boards_default_to_verified_public_ats_feeds(self) -> None:
         with patch.dict("os.environ", {}, clear=True):
             boards = parse_company_boards()

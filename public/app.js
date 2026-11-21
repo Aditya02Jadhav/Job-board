@@ -302,6 +302,16 @@ function renderJob(job, index) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+  if (job.logo) {
+    const logo = document.createElement("img");
+    logo.className = "company-logo";
+    logo.src = job.logo;
+    logo.alt = "";
+    logo.loading = "lazy";
+    logo.decoding = "async";
+    logo.addEventListener("error", () => logo.remove(), { once: true });
+    mark.append(logo);
+  }
 
   const companyBlock = document.createElement("div");
   companyBlock.className = "company-block";
@@ -316,7 +326,7 @@ function renderJob(job, index) {
   const source = job.sources?.[0];
   const sourceLink = document.createElement("a");
   sourceLink.className = "source-link";
-  sourceLink.href = source?.url || job.url;
+  sourceLink.href = job.url;
   sourceLink.target = "_blank";
   sourceLink.rel = "noopener noreferrer";
   if (source?.name && source?.url) {
