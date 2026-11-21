@@ -27,6 +27,8 @@ const elements = {
   roleFilter: document.querySelector("#role-filter"),
   searchForm: document.querySelector("#search-form"),
   searchInput: document.querySelector("#search-input"),
+  sourceList: document.querySelector("#source-list"),
+  sourceMarqueeTrack: document.querySelector("#source-marquee-track"),
   statFullTime: document.querySelector("#stat-full-time"),
   statOpenings: document.querySelector("#stat-openings"),
   statSources: document.querySelector("#stat-sources"),
@@ -37,6 +39,51 @@ const elements = {
 
 const numberFormat = new Intl.NumberFormat("en-IN");
 const jobsPerPage = 50;
+
+function getSourceNames(data) {
+  const listedSources = Array.isArray(data.sources) ? data.sources : [];
+  const namedSources = listedSources
+    .map((source) => (typeof source === "string" ? source : source?.name))
+    .filter((name) => typeof name === "string" && name.trim());
+  if (namedSources.length) return [...new Set(namedSources)].sort((a, b) => a.localeCompare(b));
+
+  const jobSources = data.jobs.flatMap((job) =>
+    Array.isArray(job.sources)
+      ? job.sources.map((source) => (typeof source === "string" ? source : source?.name))
+      : [],
+  );
+  const sources = jobSources.filter((name) => typeof name === "string" && name.trim());
+  return [...new Set(sources.length ? sources : data.jobs.map((job) => job.company).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function renderSourceMarquee(sourceNames) {
+  const group = document.createElement("div");
+  group.className = "source-marquee-group";
+
+  sourceNames.forEach((name) => {
+    const item = document.createElement("span");
+    item.className = "source-marquee-item";
+    const mark = document.createElement("span");
+    mark.className = "source-mark";
+    mark.textContent = name.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase();
+    const label = document.createElement("span");
+    label.textContent = name;
+    item.append(mark, label);
+    group.append(item);
+  });
+
+  const duplicate = group.cloneNode(true);
+  duplicate.setAttribute("aria-hidden", "true");
+  elements.sourceMarqueeTrack.replaceChildren(group, duplicate);
+  elements.sourceList.replaceChildren(
+    ...sourceNames.map((name) => {
+      const item = document.createElement("li");
+      item.textContent = name;
+      return item;
+    }),
+  );
+}
 
 function safeDate(value) {
   const date = value ? new Date(value) : null;
@@ -266,14 +313,25 @@ function renderJob(job, index) {
   posted.textContent = relativeDate(job.postedAt);
   companyBlock.append(company, posted);
 
-  const applyLink = document.createElement("a");
-  applyLink.className = "card-arrow";
-  applyLink.href = job.url;
-  applyLink.target = "_blank";
-  applyLink.rel = "noopener noreferrer";
-  applyLink.setAttribute("aria-label", `View ${job.title} at ${job.company} on the original source`);
-  applyLink.innerHTML = '<span aria-hidden="true">↗</span>';
-  top.append(mark, companyBlock, applyLink);
+  const source = job.sources?.[0];
+  const sourceLink = document.createElement("a");
+  sourceLink.className = "source-link";
+  sourceLink.href = source?.url || job.url;
+  sourceLink.target = "_blank";
+  sourceLink.rel = "noopener noreferrer";
+  if (source?.name && source?.url) {
+    sourceLink.textContent = `Via ${source.name}`;
+    sourceLink.setAttribute("aria-label", `Visit ${source.name} source for ${job.title}`);
+  } else {
+    sourceLink.textContent = "Original source";
+    sourceLink.setAttribute("aria-label", `View ${job.title} at ${job.company} on the original source`);
+  }
+  const sourceArrow = document.createElement("span");
+  sourceArrow.className = "source-arrow";
+  sourceArrow.setAttribute("aria-hidden", "true");
+  sourceArrow.textContent = "↗";
+  sourceLink.append(sourceArrow);
+  top.append(mark, companyBlock, sourceLink);
 
   const title = document.createElement("h4");
   title.className = "job-title";
@@ -286,30 +344,18 @@ function renderJob(job, index) {
   locationText.textContent = formatJobLocation(job);
   location.append(locationText);
 
+  const details = document.createElement("div");
+  details.className = "job-details";
   const tags = document.createElement("div");
   tags.className = "job-tags";
   tags.append(makeTag(job.employmentType || "Full-time", "tag-type"));
   tags.append(makeTag(job.level || "Unspecified"));
   tags.append(makeTag(job.role || "Other"));
   if (job.tagSource === "rule-based") tags.append(makeTag("Rule-based tags"));
+  details.append(location, tags);
 
   const footer = document.createElement("div");
   footer.className = "job-card-footer";
-  const source = job.sources?.[0];
-  if (source?.name && source?.url) {
-    const sourceLink = document.createElement("a");
-    sourceLink.className = "source-link";
-    sourceLink.href = source.url;
-    sourceLink.target = "_blank";
-    sourceLink.rel = "noopener noreferrer";
-    sourceLink.textContent = `Via ${source.name}`;
-    footer.append(sourceLink);
-  } else {
-    const sourceText = document.createElement("span");
-    sourceText.className = "source-link";
-    sourceText.textContent = "Original source";
-    footer.append(sourceText);
-  }
   if (job.salary) {
     const salary = document.createElement("span");
     salary.className = "salary-label";
@@ -317,7 +363,8 @@ function renderJob(job, index) {
     footer.append(salary);
   }
 
-  card.append(top, title, location, tags, footer);
+  card.append(top, title, details);
+  if (job.salary) card.append(footer);
   return card;
 }
 
@@ -463,10 +510,12 @@ async function loadJobs() {
     if (!Array.isArray(data.jobs)) throw new Error("The job feed has an invalid format.");
 
     state.jobs = data.jobs.map(normalizeJobForDisplay);
+    const sourceNames = getSourceNames(data);
     hasLoadedJobs = true;
+    renderSourceMarquee(sourceNames);
     elements.statOpenings.textContent = numberFormat.format(state.jobs.length);
     elements.statSources.textContent = numberFormat.format(
-      data.sourceCount ?? data.sources?.length ?? 0,
+      data.sourceCount ?? sourceNames.length,
     );
     elements.statFullTime.textContent = numberFormat.format(
       state.jobs.filter((job) => job.employmentType === "Full-time").length,

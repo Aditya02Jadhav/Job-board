@@ -7,8 +7,8 @@
     <meta name="description" content="Find your first job, internship, or next full-time role in India. Search real, source-linked openings refreshed every day.">
     <title>Firstlight — Find your next start</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/styles.css?v=2">
-    <script src="/app.js?v=3" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=3">
+    <script src="/app.js?v=6" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -67,6 +67,32 @@
           <p>Thoughtfully gathered from public job feeds<br class="desktop-only"> and official company career pages.</p>
         </div>
 
+        <div class="stats-row" aria-label="Job board overview">
+          <article class="stats-card">
+            <strong id="stat-openings">—</strong>
+            <h3>open opportunities</h3>
+            <p>India-focused roles gathered across a daily refresh.</p>
+          </article>
+          <article class="stats-card">
+            <strong id="stat-sources">—</strong>
+            <h3>credited sources</h3>
+            <p>See who brings these opportunities to you.</p>
+          </article>
+          <article class="stats-card">
+            <strong id="stat-full-time">—</strong>
+            <h3>full-time roles</h3>
+            <p>A searchable result board, not a wall of noise.</p>
+          </article>
+        </div>
+
+        <section class="source-strip" aria-labelledby="source-strip-title">
+          <h3 id="source-strip-title">Our credited sources</h3>
+          <div class="source-marquee" aria-hidden="true">
+            <div class="source-marquee-track" id="source-marquee-track"></div>
+          </div>
+          <ul class="visually-hidden" id="source-list" aria-label="Credited sources"></ul>
+        </section>
+
         <form class="search-form" id="search-form" role="search">
           <label class="search-box" for="search-input">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -78,24 +104,6 @@
 
         <div class="board-meta">
           <span class="updated-label">Updated <span id="updated-at">—</span></span>
-        </div>
-
-        <div class="stats-row" aria-label="Job board overview">
-          <article class="stats-card">
-            <strong id="stat-openings">—</strong>
-            <h3>open opportunities</h3>
-            <p>India-focused roles gathered across a daily refresh.</p>
-          </article>
-          <article class="stats-card">
-            <strong id="stat-sources">—</strong>
-            <h3>credited sources</h3>
-            <p>Public feeds and official company career boards.</p>
-          </article>
-          <article class="stats-card">
-            <strong id="stat-full-time">—</strong>
-            <h3>full-time roles</h3>
-            <p>A searchable result board, not a wall of noise.</p>
-          </article>
         </div>
 
         <div class="filters" aria-label="Filter opportunities">

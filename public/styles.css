@@ -97,6 +97,19 @@ h1, h2, h3, h4, p { margin: 0; }
 .stats-card strong { color: #718e4f; font-family: var(--display); font-size: clamp(48px, 5vw, 68px); font-weight: 400; line-height: 1; letter-spacing: -2px; }
 .stats-card h3 { margin-top: 21px; color: #1c2820; font-size: 15px; font-weight: 700; }
 .stats-card p { margin-top: 13px; color: #788079; font-size: 12px; line-height: 1.65; }
+.source-strip { margin: 30px 0 0; overflow: hidden; }
+.source-strip > h3 { margin-bottom: 15px; color: #788079; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+.source-marquee { position: relative; overflow: hidden; }
+.source-marquee::before, .source-marquee::after { position: absolute; z-index: 1; top: 0; bottom: 0; width: 42px; content: ""; pointer-events: none; }
+.source-marquee::before { left: 0; background: linear-gradient(90deg, #fff, transparent); }
+.source-marquee::after { right: 0; background: linear-gradient(270deg, #fff, transparent); }
+.source-marquee-track { display: flex; width: max-content; animation: source-marquee-scroll 44s linear infinite; }
+.source-marquee:hover .source-marquee-track { animation-play-state: paused; }
+.source-marquee-group { display: flex; flex: none; align-items: center; gap: 30px; padding-right: 30px; }
+.source-marquee-item { display: inline-flex; align-items: center; gap: 9px; color: #657067; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.source-mark { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #e8ece4; border-radius: 8px; background: #f7f9f4; color: #526b48; font-size: 9px; font-weight: 750; letter-spacing: -.3px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+@keyframes source-marquee-scroll { to { transform: translateX(-50%); } }
 .filters { display: flex; align-items: center; gap: 9px; padding: 16px 0 21px; }
 .filter-field { position: relative; height: 38px; min-width: 152px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border: 1px solid #e9ece6; border-radius: 5px; background: #fff; }
 .filter-field > span { color: #889088; font-size: 10px; white-space: nowrap; }
@@ -123,18 +136,18 @@ h1, h2, h3, h4, p { margin: 0; }
 .company-block { flex: 1; min-width: 0; }
 .company-name { overflow: hidden; color: #5e695f; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .posted-at { color: #a0a79f; font-size: 10px; margin-top: 4px; }
-.card-arrow { width: 28px; height: 28px; display: grid; place-items: center; flex: none; border: 1px solid #edf0ea; border-radius: 50%; color: #61765b; transition: color .2s, background .2s, border-color .2s; }
-.card-arrow:hover { border-color: #d3e2c6; background: #eff5e9; color: #345135; }
-.card-arrow span { font-size: 13px; }
 .job-title { min-height: 42px; margin-top: 17px; color: #243127; font-size: 15px; font-weight: 650; letter-spacing: -.25px; line-height: 1.4; }
-.job-location { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: #788279; font-size: 10px; }
+.job-details { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.job-location { min-width: 0; display: flex; align-items: center; gap: 5px; color: #788279; font-size: 10px; }
 .job-location svg { width: 13px; height: 13px; flex: none; }
-.job-tags { min-height: 27px; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 14px; }
+.job-location > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-tags { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 5px; }
 .job-tag { display: inline-flex; align-items: center; padding: 5px 8px; border: 1px solid #edf0eb; border-radius: 3px; color: #6d776e; font-size: 9px; line-height: 1; }
 .job-tag.tag-type { border-color: #e0ebd8; background: #f5f8f2; color: #4f7044; }
 .job-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 11px; border-top: 1px solid #f0f2ed; }
-.source-link { overflow: hidden; color: #596b52; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-a.source-link:hover { color: #365637; text-decoration: underline; text-underline-offset: 3px; }
+.source-link { min-width: 0; display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 7px 9px; border: 1px solid #dfe9d5; border-radius: 5px; background: #f2f7ec; color: #41623d; font-size: 10px; font-weight: 650; white-space: nowrap; transition: border-color .2s, background .2s, color .2s; }
+.source-link:hover { border-color: #bdd2ab; background: #e8f1df; color: #2f512f; }
+.source-arrow { font-size: 14px; line-height: 1; }
 .salary-label { color: #748075; font-size: 9px; text-align: right; }
 .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
 .pagination-info { color: #69736b; font-size: 12px; }
@@ -217,6 +230,13 @@ a.source-link:hover { color: #365637; text-decoration: underline; text-underline
   .stats-card strong { font-size: clamp(30px, 9vw, 42px); letter-spacing: -1px; }
   .stats-card h3 { margin-top: 12px; font-size: 10px; line-height: 1.3; }
   .stats-card p { margin-top: 8px; font-size: 9px; line-height: 1.45; }
+  .source-strip { margin-top: 23px; }
+  .source-strip > h3 { margin-bottom: 12px; font-size: 9px; }
+  .source-marquee-group { gap: 20px; padding-right: 20px; }
+  .source-marquee-item { gap: 7px; font-size: 11px; }
+  .source-mark { width: 27px; height: 27px; }
+  .source-marquee-track { animation-duration: 36s; }
+  .source-marquee::before, .source-marquee::after { width: 22px; }
   .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 13px 0 17px; }
   .filter-field { min-width: 0; height: 37px; gap: 6px; padding: 0 8px; }
   .filter-field > span { font-size: 9px; }
@@ -230,7 +250,7 @@ a.source-link:hover { color: #365637; text-decoration: underline; text-underline
   .job-grid { grid-template-columns: 1fr; gap: 9px; }
   .job-card { padding: 16px 15px 13px; }
   .job-title { min-height: 0; font-size: 14px; }
-  .source-link { font-size: 11px; }
+  .source-link { gap: 5px; padding: 6px 7px; font-size: 9px; }
   .pagination-bar { align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 18px; }
   .pagination { width: 100%; justify-content: center; gap: 4px; }
   .page-button { min-width: 34px; height: 36px; padding: 0 8px; font-size: 11px; }
